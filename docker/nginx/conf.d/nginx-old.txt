@@ -1,0 +1,72 @@
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_tokens off;
+
+    server_name api.aparts.buildit.kz;
+    root /var/www/public;
+
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        gzip on;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+        gzip_min_length 1000;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_vary on;
+        gzip_disable "msie6";
+    }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass app:9000;
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        fastcgi_param PATH_INFO       $fastcgi_path_info;
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+        gzip on;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+        gzip_min_length 1000;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_vary on;
+        gzip_disable "msie6";
+    }
+
+    location ~ /\.(?!well-known).* {
+        return 404;
+    }
+}
+
+server {
+    server_name aparts.buildit.kz;
+    root /var/www/front;
+
+    location / {
+        index  index.html;
+        try_files $uri $uri/ /index.html;
+        gzip on;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+        gzip_min_length 1000;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_vary on;
+        gzip_disable "msie6";
+    }
+}
+

@@ -1,0 +1,77 @@
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+    multi_accept on;
+}
+
+http {
+    server_tokens off;
+    charset utf-8;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+
+    types_hash_max_size 2048;
+
+    server_names_hash_bucket_size 64;
+    server_names_hash_max_size 512;
+
+    client_max_body_size 10M;
+
+    # Gzip Settings
+    gzip on;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_disable "msie6";
+
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Laravel API
+    server {
+        listen 80;
+        listen [::]:80;
+        server_name api.aparts.buildit.kz;
+        root /var/www/public;
+
+        index index.php;
+
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+
+        location ~ \.php$ {
+            fastcgi_pass app:9000;
+            fastcgi_split_path_info ^(.+\.php)(/.*)$;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+            fastcgi_param DOCUMENT_ROOT $realpath_root;
+            fastcgi_buffers 16 16k;
+            fastcgi_buffer_size 32k;
+        }
+
+        error_page 404 /index.php;
+    }
+
+    # Frontend
+    server {
+        listen 80;
+        listen [::]:80;
+        server_name aparts.buildit.kz;
+        root /var/www/front;
+
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }
+}

@@ -1,0 +1,43 @@
+version: '3'
+services:
+    nginx:
+        image: nginx:latest
+        volumes:
+        - ./:/var/www
+        - ./docker/nginx/conf.d:/etc/nginx/conf.d
+        - /home/dep-user/front-build:/var/www/aparts
+        ports:
+        - 80:80
+        depends_on:
+        - app
+        container_name: aparts_nginx
+    app:
+        container_name: aparts_app
+        image: registry.gitlab.com/builditkz/aparts-backend/app:latest
+        ports:
+          - 9000:9000
+        env_file:
+            - .env
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        depends_on:
+            - mysql
+    mysql:
+        container_name: aparts_db
+        image: 'mysql/mysql-server:8.0'
+        restart: always
+        ports:
+            - '${FORWARD_DB_PORT:-3306}:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: 'aparts_password'
+            MYSQL_ROOT_HOST: 'mysql'
+            MYSQL_DATABASE: 'aparts_db'
+            MYSQL_USER: 'aparts_user'
+            MYSQL_PASSWORD: 'aparts_password'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+            - 'mysql:/var/lib/mysql'
+volumes:
+    mysql:
+        driver: local
